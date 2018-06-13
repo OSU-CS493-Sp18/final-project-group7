@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const validation = require('../lib/validation');
+const { getReviewsBygamesID } = require('./game_reviews')
 
 /*
  * Schema describing required/optional fields of a game object.
@@ -231,7 +232,7 @@ function getgamesByID(gamesID, mysqlPool) {
     return getReviewsBygamesID(gamesID, mysqlPool);
     //return Promise.resolve(returngames); //
   }).then((reviews) => {
-    if (reivews) {
+    if (reviews) {
       returngames.reviews = reviews;
     }
     return Promise.resolve(returngames);
@@ -253,6 +254,7 @@ router.get('/:gameID', function (req, res, next) {
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).json({
         error: "Unable to fetch game.  Please try again later."
       });
