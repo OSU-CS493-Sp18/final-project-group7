@@ -23,7 +23,7 @@ function existingReviewByUser(userID, consoleID, pool) {
 
 }
 
-// Add a new console to the consoles SQL database.
+// Add a new console review to the console reviews SQL database.
 function insertNewConsoleReview(info, pool) {
     
 }
@@ -38,32 +38,32 @@ function updateConsoleReviewByID(id, info, pool){
 
 } 
 
-// Route to update a new console by consoleID
+// Route to update a console review by reviewID
 router.put('/:consoleID', function(req, res, next) {
 
 });
 
-// Delete console by consoleID.
+// Delete console review by reviewID.
 function deleteConsoleReviewByID(id, pool) {
 
 }
 
-// Route to delete a game.
+// Route to delete a console review by reviewID.
 router.delete('/:consoleID', function (req, res, next) {
 
 });
 
-// Function to retrieve information about a specific console.
+// Function to retrieve information about a specific review by reviewID.
 function getConsoleReviewByID(id, pool) {
 
 }
 
-// Route for getting a specific console by consoleID
+// Route for getting a specific console review by reviewID
 router.get('/:consoleID', function (req, res, next) {
 
 });
 
-// Route for list of consoles.
+// Route for list of console reviews.
 router.get('/', function(req, res) {
 
 });

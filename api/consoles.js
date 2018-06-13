@@ -42,7 +42,7 @@ function deleteConsoleByID(id, pool) {
 
 }
 
-// Route to delete a game.
+// Route to delete a console by consoleID.
 router.delete('/:consoleID', function (req, res, next) {
 
 });
