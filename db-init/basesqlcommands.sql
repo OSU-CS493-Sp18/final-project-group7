@@ -49,9 +49,9 @@ CREATE TABLE rentals
   gameID INT NOT NULL,
   renterID INT NOT NULL,
   PRIMARY KEY (rentalID),
-  FOREIGN KEY (consoleID) REFERENCES consoles(consoleID),
-  FOREIGN KEY (gameID) REFERENCES games(gameID),
-  FOREIGN KEY (renterID) REFERENCES users(userID)
+  FOREIGN KEY (consoleID) REFERENCES consoles(consoleID) ON DELETE CASCADE,
+  FOREIGN KEY (gameID) REFERENCES games(gameID) ON DELETE CASCADE,
+  FOREIGN KEY (renterID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE platforms
@@ -59,8 +59,8 @@ CREATE TABLE platforms
   consoleID INT NOT NULL,
   gameID INT NOT NULL,
   PRIMARY KEY (consoleID, gameID),
-  FOREIGN KEY (consoleID) REFERENCES consoles(consoleID),
-  FOREIGN KEY (gameID) REFERENCES games(gameID)
+  FOREIGN KEY (consoleID) REFERENCES consoles(consoleID) ON DELETE CASCADE,
+  FOREIGN KEY (gameID) REFERENCES games(gameID) ON DELETE CASCADE
 );
 
 CREATE TABLE gamereviews
@@ -71,8 +71,8 @@ CREATE TABLE gamereviews
   gameID INT NOT NULL,
   userID INT NOT NULL,
   PRIMARY KEY (reviewID),
-  FOREIGN KEY (gameID) REFERENCES games(gameID),
-  FOREIGN KEY (userID) REFERENCES users(userID)
+  FOREIGN KEY (gameID) REFERENCES games(gameID) ON DELETE CASCADE,
+  FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE consolereviews
@@ -83,9 +83,25 @@ CREATE TABLE consolereviews
   consoleID INT NOT NULL,
   userID INT NOT NULL,
   PRIMARY KEY (reviewID),
-  FOREIGN KEY (consoleID) REFERENCES consoles(consoleID),
-  FOREIGN KEY (userID) REFERENCES users(userID)
+  FOREIGN KEY (consoleID) REFERENCES consoles(consoleID) ON DELETE CASCADE,
+  FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
 );
+
+CREATE TRIGGER computeGameRatAvg
+AFTER INSERT ON gamereviews
+FOR EACH ROW
+    UPDATE games
+    SET rating = (SELECT AVG(rating) FROM gamereviews
+                         WHERE gamereviews.gameID = games.gameID)
+    WHERE gameID = NEW.gameID;
+
+CREATE TRIGGER computeConsoleRatAvg
+AFTER INSERT ON consolereviews
+FOR EACH ROW
+    UPDATE consoles
+    SET rating = (SELECT AVG(rating) FROM consolereviews
+                         WHERE consolereviews.consoleID = consoles.consoleID)
+    WHERE consoleID = NEW.consoleID;
 
 INSERT INTO consoles SET
 consoleID = NULL,
