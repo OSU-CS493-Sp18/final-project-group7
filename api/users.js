@@ -3,6 +3,9 @@ const bcrypt = require('bcryptjs');
 const { generateAuthToken, requireAuthentication } = require('../lib/auth');
 const validation = require('../lib/validation');
 
+const { getRentalsByUserID } = require('./rentals');
+const { getGameReviewsByUserID } = require('./game_reviews');
+
 const userSchema = {
   userid: { required: false },
   username: { required: true },
@@ -75,18 +78,6 @@ function getUserByID(userID, mysqlPool, includePassword) {
   });
 }
 
-function getRentalsByUserID(userID, mysqlPool) {
-  return new Promise((resolve, reject) => {
-    mysqlPool.query('SELECT * FROM rentals WHERE renterID = ?', [ userID ], function (err, results) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(results);
-      }
-    });
-  });
-}
-
 router.post('/login', function (req, res) {
   const mysqlPool = req.app.locals.mysqlPool;
   if (req.body && req.body.userID && req.body.password) {
@@ -133,6 +124,7 @@ router.get('/:userID', requireAuthentication, function (req, res, next) {
   const mysqlPool = req.app.locals.mysqlPool;
   var userObj;
   var rentalsObj;
+  var gameReviewsObj;
 
   if (req.user !== req.params.userID) {
     res.status(403).json({
@@ -147,10 +139,17 @@ router.get('/:userID', requireAuthentication, function (req, res, next) {
             .then((rentals) => {
               if(rentals){
                 rentalObj = rentals;
-                res.status(200).json({
-                  user: userObj,
-                  rentals: rentalObj
-                });
+                return getGameReviewsByUserID(req.params.userID, mysqlPool)
+                .then((gameReviews) => {
+                  if(gameReviews){
+                    gameReviewsObj = gameReviews;
+                    res.status(200).json({
+                      user: userObj,
+                      rentals: rentalObj,
+                      gameReviews: gameReviewsObj
+                    });
+                  }
+                })
               }
             })
           } else {
