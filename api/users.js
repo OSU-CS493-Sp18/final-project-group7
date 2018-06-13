@@ -3,10 +3,6 @@ const bcrypt = require('bcryptjs');
 const { generateAuthToken, requireAuthentication } = require('../lib/auth');
 const validation = require('../lib/validation');
 
-const { getBusinessesByOwnerID } = require('./businesses');
-const { getReviewsByUserID } = require('./reviews');
-const { getPhotosByUserID } = require('./photos');
-
 const userSchema = {
   userid: { required: false },
   username: { required: true },
@@ -43,7 +39,6 @@ function insertNewUser(user, mysqlPool) {
     });
   }
 
-
 router.post('/', function (req, res) {
   const mysqlPool = req.app.locals.mysqlPool;
   if (validation.validateAgainstSchema(req.body, userSchema)) {
@@ -75,6 +70,18 @@ function getUserByID(userID, mysqlPool, includePassword) {
         reject(err);
       } else {
         resolve(results[0]);
+      }
+    });
+  });
+}
+
+function getRentalsByUserID(userID, mysqlPool) {
+  return new Promise((resolve, reject) => {
+    mysqlPool.query('SELECT * FROM rentals WHERE renterID = ?', [ userID ], function (err, results) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
       }
     });
   });
@@ -124,26 +131,32 @@ router.post('/login', function (req, res) {
 
 router.get('/:userID', requireAuthentication, function (req, res, next) {
   const mysqlPool = req.app.locals.mysqlPool;
+  var userObj;
+  var rentalsObj;
+
   if (req.user !== req.params.userID) {
     res.status(403).json({
       error: "Unauthorized to access that resource."
     });
   } else {
-    getUserByID(req.params.userID, mysqlPool)
+    getUserByID(req.params.userID, mysqlPool, true)
       .then((user) => {
         if (user) {
-          const userValues = {
-            userID: user.userID,
-            username: user.username,
-            firstname: user.firstname,
-            lastname: user.lastname,
-            email: user.email
-          };
-          res.status(200).json(userValues);
-        } else {
-          next();
-        }
-      })
+            userObj = user;
+            return getRentalsByUserID(req.params.userID, mysqlPool)
+            .then((rentals) => {
+              if(rentals){
+                rentalObj = rentals;
+                res.status(200).json({
+                  user: userObj,
+                  rentals: rentalObj
+                });
+              }
+            })
+          } else {
+            next();
+          }
+        })
       .catch((err) => {
         res.status(500).json({
           error: "Failed to fetch user."
@@ -195,19 +208,21 @@ router.delete('/:userID', requireAuthentication, function (req, res, next) {
 function updateUserByID(userID, user, mysqlPool) {
   return new Promise((resolve, reject) => {
     const userValues = {
-      userID: user.userID,
+      userID: userID,
       username: user.username,
       firstname: user.firstname,
       lastname: user.lastname,
       email: user.email
     };
     mysqlPool.query(
-      'UPDATE users SET ? WHERE id = ?',
+      'UPDATE users SET ? WHERE userID = ?',
       [ userValues, userID ],
       function (err, result) {
         if (err) {
+          console.log(err);
           reject(err);
         } else {
+          console.log(result.affectedRows > 0);
           resolve(result.affectedRows > 0);
         }
       }
@@ -224,7 +239,7 @@ router.put('/:userID', function (req, res, next) {
         if (updateSuccessful) {
           res.status(200).json({
             links: {
-              business: `/users/${userID}`
+              userID: `/users/${userID}`
             }
           });
         } else {
@@ -242,87 +257,5 @@ router.put('/:userID', function (req, res, next) {
     });
   }
 });
-
-//
-// /*
-//  * Route to list all of a user's businesses.
-//  */
-// router.get('/:userID/businesses', requireAuthentication, function (req, res) {
-//   const mysqlPool = req.app.locals.mysqlPool;
-//   const userID = parseInt(req.params.userID);
-//   if (req.user !== req.params.userID) {
-//     res.status(403).json({
-//       error: "Unauthorized to access that resource"
-//     });
-//   } else {
-//   getBusinessesByOwnerID(userID, mysqlPool)
-//     .then((businesses) => {
-//       if (businesses) {
-//         res.status(200).json({ businesses: businesses });
-//       } else {
-//         next();
-//       }
-//     })
-//     .catch((err) => {
-//       res.status(500).json({
-//         error: "Unable to fetch businesses.  Please try again later."
-//       });
-//     });
-//   }
-// });
-//
-// /*
-//  * Route to list all of a user's reviews.
-//  */
-// router.get('/:userID/reviews', requireAuthentication, function (req, res) {
-//   const mysqlPool = req.app.locals.mysqlPool;
-//   const userID = parseInt(req.params.userID);
-//   if (req.user !== req.params.userID) {
-//     res.status(403).json({
-//       error: "Unauthorized to access that resource"
-//     });
-//   } else {
-//     getReviewsByUserID(userID, mysqlPool)
-//       .then((reviews) => {
-//         if (reviews) {
-//           res.status(200).json({ reviews: reviews });
-//         } else {
-//           next();
-//         }
-//       })
-//       .catch((err) => {
-//         res.status(500).json({
-//           error: "Unable to fetch reviews.  Please try again later."
-//         });
-//       });
-//     }
-// });
-//
-// /*
-//  * Route to list all of a user's photos.
-//  */
-// router.get('/:userID/photos', requireAuthentication, function (req, res) {
-//   const mysqlPool = req.app.locals.mysqlPool;
-//   const userID = parseInt(req.params.userID);
-//   if (req.user !== req.params.userID) {
-//     res.status(403).json({
-//       error: "Unauthorized to access that resource"
-//     });
-//   } else {
-//     getPhotosByUserID(userID, mysqlPool)
-//       .then((photos) => {
-//         if (photos) {
-//           res.status(200).json({ photos: photos });
-//         } else {
-//           next();
-//         }
-//       })
-//       .catch((err) => {
-//         res.status(500).json({
-//           error: "Unable to fetch photos.  Please try again later."
-//         });
-//       });
-//     }
-// });
 
 exports.router = router;
