@@ -12,13 +12,7 @@ const gamesSchema = {
   price: { required: true },
   platforms: { required: false } //an array of consoles/OS's that the game has been ported to
 };
-const gamesPutSchema = {
-  name: { required: true },
-  genre: { required: true },
-  esrb: { required: true },
-  //rating: { required: false }, //aggregated rating will be calculated later
-  price: { required: true },
-};
+
 
 /*
  * Executes a MySQL query to fetch the total number of game.  Returns
@@ -136,7 +130,7 @@ function insertNewGame(game, mysqlPool) {
 */
 function gameConsoleLink(gameID, platforms, mysqlPool){
   var errorMSG = "No Errors on inserting connections";
-  /*/delete existing links
+  //delete existing links
   mysqlPool.query(
     'DELETE FROM platforms WHERE gameID = ?', gameID,
     function (err, result){}
@@ -234,30 +228,14 @@ function getgamesByID(gamesID, mysqlPool) {
     if (platforms){
       returngames.platforms = platforms;
     }
+    return getReviewsBygamesID(gamesID, mysqlPool);
+    //return Promise.resolve(returngames); //
+  }).then((reviews) => {
+    if (reivews) {
+      returngames.reviews = reviews;
+    }
     return Promise.resolve(returngames);
   })
-  /*.then((games) => {
-    if (games) {
-      returngames = games;
-      return getReviewsBygamesID(gamesID, mysqlPool);
-    } else {
-      return Promise.resolve(null);
-    }
-  }).then((reviews) => {
-    if (reviews) {
-      returngames.reviews = reviews;
-      return getPhotosBygamesID(gamesID, mysqlPool);
-    } else {
-      return Promise.resolve(null);
-    }
-  }).then((photos) => {
-    if (photos) {
-      returngames.photos = photos;
-      return Promise.resolve(returngames);
-    } else {
-      return Promise.resolve(null);
-    }
-  })*/
 }
 
 /*
@@ -308,11 +286,21 @@ function deletegameByID(gameID, mysqlPool) {
  */
 function replacegamesByID(gamesID, games, mysqlPool) {
   return new Promise((resolve, reject) => {
-    games = validation.extractValidFields(games, gamesPutSchema);
-    mysqlPool.query('UPDATE games SET ? WHERE gameID = ?', [ games, gamesID ], function (err, result) {
+    games = validation.extractValidFields(games, gamesSchema);
+    gameInsert = {
+      name: games.name,
+      genre: games.genre,
+      esrb: games.esrb,
+      //rating: game.rating,
+      price: games.price,
+    };
+    mysqlPool.query('UPDATE games SET ? WHERE gameID = ?', [ gameInsert, gamesID ], function (err, result) {
       if (err) {
         reject(err);
       } else {
+        if(games.platforms){
+          gameConsoleLink(gamesID, games.platforms, mysqlPool);
+        }
         resolve(result.affectedRows > 0);
       }
     });
