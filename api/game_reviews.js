@@ -261,5 +261,22 @@ function getReviewsBygamesID(gameID, mysqlPool){
   });
 }
 
+function getGameReviewsByUserID(userID, mysqlPool) {
+  return new Promise((resolve, reject) => {
+    mysqlPool.query(
+      'SELECT * FROM gamereviews WHERE userID = ?',
+      [ userID ],
+      function (err, results) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(results);
+        }
+      }
+    );
+  });
+}
+
+exports.getGameReviewsByUserID = getGameReviewsByUserID;
 exports.getReviewsBygamesID = getReviewsBygamesID;
 exports.router = router;
