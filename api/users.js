@@ -102,7 +102,6 @@ router.post('/login', function (req, res) {
         });
       })
       .catch((err) => {
-        console.log(err);
         if (err === 401) {
           res.status(401).json({
             error: "Invalid credentials."
@@ -218,10 +217,8 @@ function updateUserByID(userID, user, mysqlPool) {
       [ userValues, userID ],
       function (err, result) {
         if (err) {
-          console.log(err);
           reject(err);
         } else {
-          console.log(result.affectedRows > 0);
           resolve(result.affectedRows > 0);
         }
       }

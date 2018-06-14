@@ -216,10 +216,8 @@ function updateRentalByID(rentalID, rental, mysqlPool) {
       [ rentalValues, rentalID ],
       function (err, result) {
         if (err) {
-          console.log(err);
           reject(err);
         } else {
-          console.log(result.affectedRows > 0);
           resolve(result.affectedRows > 0);
         }
       }
@@ -231,7 +229,6 @@ router.put('/:rentalID', function (req, res, next) {
   const mysqlPool = req.app.locals.mysqlPool;
   const rentalID = parseInt(req.params.rentalID);
   if (validation.validateAgainstSchema(req.body, rentalSchema)) {
-    console.log("Passed validation.");
     updateRentalByID(rentalID, req.body, mysqlPool)
       .then((updateSuccessful) => {
         if (updateSuccessful) {
