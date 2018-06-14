@@ -12,9 +12,9 @@ const addConsoleReviewSchema = {
 };
 
 const updateConsoleReviewSchema = {
-    consoleID:  { required: true },
-    userID:     { required: true },
-    rating:     { required: true },    
+    consoleID:  { required: false },
+    userID:     { required: false },
+    rating:     { required: false },    
     review:     { required: false }
 };
 

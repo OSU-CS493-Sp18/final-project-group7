@@ -193,15 +193,77 @@ router.get('/:consoleID', function (req, res, next) {
 // Support functions for getting paginated console list.
 // Get a console count, to help with pagincation.
 function getConsoleCount(pool){
-
+  return new Promise((resolve, reject) => {
+    pool.query('SELECT COUNT(*) AS count FROM consoles', function (err, results) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results[0].count);
+      }
+    });
+  });
 }
 
 // Get a page for the paginated list.
 function getConsolePage(page, totalCount, pool){
+  return new Promise((resolve, reject) => {
+    /*
+     * Compute last page number and make sure page is within allowed bounds.
+     * Compute offset into collection.
+     */
+    const numPerPage = 10;
+    const lastPage = Math.max(Math.ceil(totalCount / numPerPage), 1);
+    page = page < 1 ? 1 : page;
+    page = page > lastPage ? lastPage : page;
+    const offset = (page - 1) * numPerPage;
 
+    pool.query(
+      'SELECT * FROM consoles ORDER BY consoleID LIMIT ?,?',
+      [ offset, numPerPage ],
+      function (err, results) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({
+            console: results,
+            pageNumber: page,
+            totalPages: lastPage,
+            pageSize: numPerPage,
+            totalCount: totalCount
+          });
+        }
+      }
+    );
+  });
 }
 
 // Route for paginated list of consoles.
 router.get('/', function(req, res) {
-
+  const pool = req.app.locals.mysqlPool;
+  getConsoleCount(pool)
+    .then((count) => {
+      return getConsolePage(parseInt(req.query.page) || 1, count, pool);
+    })
+    .then((consolePageInfo) => {
+      /*
+       * Generate HATEOAS links for surrounding pages and then send response.
+       */
+      consolePageInfo.links = {};
+      let { links, pageNumber, totalPages } = consolePageInfo;
+      if (pageNumber < totalPages) {
+        links.nextPage = `/consoles?page=${pageNumber + 1}`;
+        links.lastPage = `/consoles?page=${totalPages}`;
+      }
+      if (pageNumber > 1) {
+        links.prevPage = `/consoles?page=${pageNumber - 1}`;
+        links.firstPage = '/consoles?page=1';
+      }
+      res.status(200).json(consolePageInfo);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        error: "Error fetching consoles list.  Please try again later."
+      });
+    });
 });
