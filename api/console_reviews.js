@@ -34,9 +34,9 @@ function existingReviewByUser(userID, consoleID, pool) {
 }
 
 // Add a new console review to the console reviews SQL database.
-function insertNewConsoleReview(info, pool) {
+function insertNewConsoleReview(review, pool) {
   return new Promise((resolve, reject) => {
-    info = validation.extractValidFields(info, addConsoleReviewSchema);
+    review = validation.extractValidFields(review, addConsoleReviewSchema);
     pool.query(
       'INSERT INTO consolereviews SET ?',
       review,
@@ -138,6 +138,7 @@ router.put('/:reviewID', function(req, res, next) {
         }
       })
       .catch((err) => {
+        console.log(err);
         if (err === 403) {
           res.status(403).json({
             error: "Updated review must have the same consoleID and userID"
@@ -193,7 +194,7 @@ router.delete('/:reviewID', function (req, res, next) {
 function getReviewByID(id, pool) {
   return new Promise((resolve, reject) => {
     pool.query('SELECT * FROM consolereviews WHERE reviewID = ?',
-    [ reviewID ],
+    [ id ],
     function (err, results) {
       if (err) {
         reject(err);
@@ -256,5 +257,5 @@ function getReviewsByConsoleID(id, pool){
 }
 
 exports.getConsoleReviewsByUserID = getConsoleReviewsByUserID;
-exports.getReviewsByConsoleID = getReviewsByConsoleID;
+exports.getConsoleReviewsByConsoleID = getReviewsByConsoleID;
 exports.router = router;

@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const validation = require('../lib/validation');
 
+const { getConsoleReviewsByConsoleID } = require('./console_reviews');
+
 // Verification schema for consoles
 const addConsoleSchema = {
     name:           { required: true },
@@ -48,7 +50,7 @@ router.post('/', function (req, res, next) {
         res.status(201).json({
           id: consoleID,
           links: {
-            id: `/consoles/${id}`
+            console: `/consoles/${consoleID}`
           }
         });
       })
@@ -75,8 +77,8 @@ function updateConsoleByID(id, info, pool){
       price:          info.price,
       tvrequirements: info.tvrequirements
     };
-    pool.query('UPDATE console SET ? WHERE consoleID = ?',
-    [ consoleObj, consoleID ],
+    pool.query('UPDATE consoles SET ? WHERE consoleID = ?',
+    [ consoleObj, id ],
     function (err, result) {
       if (err) {
         console.log(err);
@@ -93,13 +95,16 @@ function updateConsoleByID(id, info, pool){
 router.put('/:consoleID', function(req, res, next) {
   const pool = req.app.locals.mysqlPool;
   const consoleID = parseInt(req.params.consoleID);
+  console.log(validation.validateAgainstSchema(req.body, updateConsoleSchema));
   if (validation.validateAgainstSchema(req.body, updateConsoleSchema)) {
+    console.log(consoleID);
     updateConsoleByID(consoleID, req.body, pool)
       .then((updateSuccessful) => {
+        console.log(updateSuccessful);
         if (updateSuccessful) {
           res.status(200).json({
             links: {
-              id: `/consoles/${consoleID}`
+              console: `/consoles/${consoleID}`
             }
           });
         } else {
@@ -107,6 +112,7 @@ router.put('/:consoleID', function(req, res, next) {
         }
       })
       .catch((err) => {
+        console.log(err);
         res.status(500).json({
           error: "Unable to update console."
         });
@@ -139,7 +145,7 @@ function deleteConsoleByID(id, pool) {
 router.delete('/:consoleID', function (req, res, next) {
   const consoleID = parseInt(req.params.consoleID);
   const pool = req.app.locals.mysqlPool;
-  deleteconsoleByID(consoleID, pool)
+  deleteConsoleByID(consoleID, pool)
     .then((deleteSuccessful) => {
       if (deleteSuccessful) {
         res.status(204).end();
