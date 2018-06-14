@@ -171,7 +171,6 @@ router.post('/', function (req, res, next) {
         });
       })
       .catch((err) => {
-        console.log(err);
         res.status(500).json({
           error: "Error inserting game into DB.  Please try again later."
         });
@@ -212,9 +211,11 @@ function getgamesByID(gamesID, mysqlPool) {
   return new Promise((resolve, reject) => {
     mysqlPool.query('SELECT * FROM games WHERE gameID = ?', gamesID, function (err, results) {
       if (err) {
-        //console.log("Err at games");
         reject(err);
       } else {
+        if(results[0] == undefined){
+          reject(err);
+        }
         resolve(results[0]);
       }
     });
@@ -254,7 +255,6 @@ router.get('/:gameID', function (req, res, next) {
       }
     })
     .catch((err) => {
-      console.log(err);
       res.status(500).json({
         error: "Unable to fetch game.  Please try again later."
       });
@@ -271,7 +271,6 @@ function deletegameByID(gameID, mysqlPool) {
   return new Promise((resolve, reject) => {
     mysqlPool.query('DELETE FROM games WHERE gameID = ?', [ gameID ], function (err, result) {
       if (err) {
-        console.log(err);
         reject(err);
       } else {
         resolve(result.affectedRows > 0);
@@ -327,7 +326,6 @@ router.put('/:gamesID', function (req, res, next) {
         }
       })
       .catch((err) => {
-        console.log(err);
         res.status(500).json({
           error: "Unable to update specified console.  Please try again later."
         });
