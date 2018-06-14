@@ -5,6 +5,7 @@ const validation = require('../lib/validation');
 
 const { getRentalsByUserID } = require('./rentals');
 const { getGameReviewsByUserID } = require('./game_reviews');
+const { getConsoleReviewsByUserID } = require('./console_reviews');
 
 const userSchema = {
   userid: { required: false },
@@ -124,6 +125,7 @@ router.get('/:userID', requireAuthentication, function (req, res, next) {
   var userObj;
   var rentalsObj;
   var gameReviewsObj;
+  var consoleReviewsObj;
 
   if (req.user !== req.params.userID) {
     res.status(403).json({
@@ -142,11 +144,18 @@ router.get('/:userID', requireAuthentication, function (req, res, next) {
                 .then((gameReviews) => {
                   if(gameReviews){
                     gameReviewsObj = gameReviews;
-                    res.status(200).json({
-                      user: userObj,
-                      rentals: rentalObj,
-                      gameReviews: gameReviewsObj
-                    });
+                    return getConsoleReviewsByUserID(req.params.userID, mysqlPool)
+                    .then((consoleReviews) => {
+                      if(consoleReviews){
+                        consoleReviewsObj = consoleReviews;
+                        res.status(200).json({
+                          user: userObj,
+                          rentals: rentalObj,
+                          gameReviews: gameReviewsObj,
+                          consoleReviews: consoleReviewsObj
+                        });
+                      }
+                    })
                   }
                 })
               }
