@@ -300,9 +300,7 @@ function replacegamesByID(gamesID, games, mysqlPool) {
       if (err) {
         reject(err);
       } else {
-        if(games.platforms){
-          gameConsoleLink(gamesID, games.platforms, mysqlPool);
-        }
+        gameConsoleLink(gamesID, games.platforms, mysqlPool);
         resolve(result.affectedRows > 0);
       }
     });
