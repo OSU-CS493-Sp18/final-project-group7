@@ -1,8 +1,6 @@
 const router = require('express').Router();
 const validation = require('../lib/validation');
 
-exports.router = router;
-
 // Verification schema for consoles
 const addConsoleSchema = {
     name:           { required: true },
@@ -21,7 +19,7 @@ const updateConsoleSchema = {
 function insertNewConsole(info, pool) {
   return new Promise((resolve, reject) => {
     consoleObj = {
-      consoleID:      Snull,
+      consoleID:      null,
       rating:         null,
       name:           info.name,
       price:          info.price,
@@ -70,7 +68,7 @@ router.post('/', function (req, res, next) {
 // Updates console info by ID.
 function updateConsoleByID(id, info, pool){
   return new Promise((resolve, reject) => {
-    consoleInfo = validation.extractValidFields(info, updateConsoleSchema);
+    info = validation.extractValidFields(info, updateConsoleSchema);
     consoleObj = {
       consoleID:      id,
       name:           info.name,
@@ -172,21 +170,32 @@ function getConsoleByID(id, pool) {
 // Route for getting a specific console by consoleID
 router.get('/:consoleID', function (req, res, next) {
   const pool = req.app.locals.mysqlPool;
-  const consoleID = parseInt(req.params.consoleID);
-  getConsoleByID(consoleID, pool)
-    .then((consoleObj) => {
-      if (consoleObj) {
-        res.status(200).json(consoleObj);
-      } else {
-        next();
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({
-        error: "Unable to fetch console.  Please try again later."
+  var consoleObj;
+  var consoleReviewsObj;
+
+  getConsoleByID(req.params.consoleID, pool)
+  .then((cons) => {
+    if (cons) {
+      consoleObj = cons;
+      return getConsoleReviewsByConsoleID(req.params.consoleID, pool)
+      .then((consoleReviews) => {
+        if(consoleReviews){
+          consoleReviewsObj = consoleReviews;
+          res.status(200).json({
+            console:        consoleObj,
+            consoleReviews: consoleReviewsObj
+          });
+        }
       });
+    } else {
+      next();
+    }
+  })
+  .catch((err) => {
+    res.status(500).json({
+      error: "Failed to fetch console."
     });
+  });
 });
 
 
@@ -267,3 +276,5 @@ router.get('/', function(req, res) {
       });
     });
 });
+
+exports.router = router;

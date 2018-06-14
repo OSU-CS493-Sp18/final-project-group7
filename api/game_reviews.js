@@ -75,7 +75,7 @@ router.post('/', function (req, res, next) {
           id: id,
           links: {
             review: `/game_reviews/${id}`,
-            business: `/games/${req.body.gameID}`
+            game: `/games/${req.body.gameID}`
           }
         });
       })
@@ -97,6 +97,7 @@ router.post('/', function (req, res, next) {
     });
   }
 });
+
 /*
  * Executes a MySQL query to fetch a single specified review based on its ID.
  * Returns a Promise that resolves to an object containing the requested
@@ -135,6 +136,7 @@ router.get('/:reviewID', function (req, res, next) {
       });
     });
 });
+
 /*
  * Executes a MySQL query to replace a specified review with new data.
  * Returns a Promise that resolves to true if the review specified by
