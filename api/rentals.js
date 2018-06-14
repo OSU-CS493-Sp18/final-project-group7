@@ -11,6 +11,18 @@ const rentalSchema = {
   renterID: { required: true }
 };
 
+function getRentalsByUserID(userID, mysqlPool) {
+  return new Promise((resolve, reject) => {
+    mysqlPool.query('SELECT * FROM rentals WHERE renterID = ?', [ userID ], function (err, results) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+}
+
 function getRentalsCount(mysqlPool) {
   return new Promise((resolve, reject) => {
     mysqlPool.query('SELECT COUNT(*) AS count FROM rentals', function (err, results) {
@@ -243,4 +255,6 @@ router.put('/:rentalID', function (req, res, next) {
     });
   }
 });
+
+exports.getRentalsByUserID = getRentalsByUserID;
 exports.router = router;

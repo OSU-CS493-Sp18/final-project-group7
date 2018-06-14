@@ -340,8 +340,6 @@ router.put('/:gamesID', function (req, res, next) {
     });
   }
 });
-
-
 /*
  * Route to delete a game.
  */
