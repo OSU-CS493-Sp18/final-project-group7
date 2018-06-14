@@ -331,7 +331,7 @@ router.put('/:gamesID', function (req, res, next) {
       .catch((err) => {
         console.log(err);
         res.status(500).json({
-          error: "Unable to update specified games.  Please try again later."
+          error: "Unable to update specified console.  Please try again later."
         });
       });
   } else {
